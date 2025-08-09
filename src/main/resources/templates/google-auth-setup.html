@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Configurar Google Authenticator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body class="bg-light d-flex align-items-center vh-100">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-5">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center">
+                        <h2 class="card-title mb-4">Escanea este código QR con Google Authenticator</h2>
+                        <img th:src="${qrUrl}" alt="QR Code" class="img-fluid mb-3 border rounded" style="max-width: 200px;" />
+                        <p class="mb-4">Clave secreta: <strong th:text="${secret}"></strong></p>
+
+                        <form th:action="@{/google-auth/validate}" method="post" class="mb-3">
+                            <input type="hidden" name="email" th:value="${email}" />
+                            <div class="mb-3 text-start">
+                                <label for="codigo" class="form-label">Ingresa el código generado en la app:</label>
+                                <input type="number" id="codigo" name="codigo" class="form-control" required />
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Verificar</button>
+                        </form>
+
+                        <div th:if="${error}" class="alert alert-danger mt-3" role="alert">
+                            <p class="mb-0" th:text="${error}"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
