@@ -33,13 +33,28 @@ public class UsuarioController {
 
     @PostMapping("/registro")
     public String registrar(@ModelAttribute Usuario usuario, Model model) {
+        // Validar si ya existe
+        Optional<Usuario> existente = usuarioRepository.findByEmail(usuario.getEmail());
+        if (existente.isPresent()) {
+            model.addAttribute("usuario", usuario);
+            model.addAttribute("error", "El correo ya está registrado.");
+            return "registro"; // Volvemos a mostrar el formulario con el error
+        }
+
+        // Generar OTP
         String otp = String.format("%06d", new Random().nextInt(999999));
         usuario.setOtp(otp);
         usuario.setVerificado(false);
         usuarioRepository.save(usuario);
 
-        emailService.enviarOtp(usuario.getEmail(), otp);
-        System.out.println("OTP generado para " + usuario.getEmail() + ": " + otp);
+        try {
+            emailService.enviarOtp(usuario.getEmail(), otp);
+            System.out.println("OTP generado para " + usuario.getEmail() + ": " + otp);
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("error", "Hubo un problema enviando el correo. Intente nuevamente.");
+            return "registro";
+        }
 
         return "redirect:/verificar?email=" + usuario.getEmail();
     }

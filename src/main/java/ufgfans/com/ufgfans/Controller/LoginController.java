@@ -12,18 +12,15 @@ public class LoginController {
     public String mostrarLogin(
             @RequestParam(value = "error", required = false) String error,
             @RequestParam(value = "username", required = false) String username,
-            @RequestParam(value = "password", required = false) String password,
             Model model) {
 
         if (error != null) {
             model.addAttribute("error", "Credenciales incorrectas, intenta de nuevo.");
             model.addAttribute("username", username);
-            model.addAttribute("password", password);
         }
 
-        return "login";  // templates/login.html
+        return "login";
     }
-
 
     // Manejo de error 403 para evitar Whitelabel Error Page
     @GetMapping("/403")

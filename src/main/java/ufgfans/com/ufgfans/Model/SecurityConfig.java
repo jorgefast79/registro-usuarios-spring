@@ -30,8 +30,11 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/registro",
+                    "/registro/**",
                     "/verificar",
+                    "/verificar/**",
                     "/completar-registro",
+                    "/completar-registro/**",
                     "/login",
                     "/google-auth/setup",
                     "/google-auth/validate",
@@ -42,6 +45,7 @@ public class SecurityConfig {
             )
             .formLogin(form -> form
                 .loginPage("/login")
+                .failureUrl("/login?error=true")
                 .loginProcessingUrl("/login")
                 .successHandler(customAuthenticationSuccessHandler)
                 .failureHandler((request, response, exception) -> {

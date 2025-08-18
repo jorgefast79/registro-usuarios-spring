@@ -23,73 +23,82 @@ public class GoogleAuthController {
     private UsuarioRepository usuarioRepository;
 
     @GetMapping("/google-auth/setup")
-    public String mostrarFormularioSetup(@RequestParam String email, Model model) {
+    public String mostrarSetup(@RequestParam String email, Model model) {
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
 
-        // Si aún no tiene clave secreta, se la generamos
-        String secretKey = usuario.getSecretKey();
-        if (secretKey == null || secretKey.isEmpty()) {
+        if (usuario.getSecretKey() == null || usuario.getSecretKey().isEmpty()) {
+            // Primera vez: generar clave y QR
             GoogleAuthService.GoogleAuthData data = googleAuthService.generarClaveYQR(email);
-            secretKey = data.getSecret();
-            usuario.setSecretKey(secretKey);
+            usuario.setSecretKey(data.getSecret());
             usuarioRepository.save(usuario);
 
             model.addAttribute("qrUrl", data.getQrUrl());
-            model.addAttribute("secret", secretKey);
+            model.addAttribute("secret", data.getSecret());
+            model.addAttribute("email", email);
+            return "google-auth-setup";
         } else {
-            // Si ya tiene clave, solo mostramos el QR que corresponda
-            GoogleAuthService.GoogleAuthData data = new GoogleAuthService.GoogleAuthData(secretKey, "");
-            model.addAttribute("qrUrl", data.getQrUrl());
-            model.addAttribute("secret", secretKey);
+            // Ya tiene secret → pedir código directamente
+            model.addAttribute("email", email);
+            return "google-auth-validate";
         }
-
-        model.addAttribute("email", email);
-        return "google-auth-setup"; // vista Thymeleaf para escanear QR
     }
 
     @GetMapping("/google-auth/validate")
     public String mostrarFormularioValidate(@RequestParam String email, Model model) {
         model.addAttribute("email", email);
-        return "google-auth-validate";  // archivo thymeleaf google-auth-validate.html
+        return "google-auth-validate";
     }
 
     @PostMapping("/google-auth/validate")
     public String validarCodigo(@RequestParam String email, @RequestParam String codigo, Model model) {
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
 
-        String secretKey = usuario.getSecretKey();
+        if (usuario.getSecretKey() == null || usuario.getSecretKey().isEmpty()) {
+            // Si no tiene secret → redirigir a setup
+            return "redirect:/google-auth/setup?email=" + email;
+        }
+
         GoogleAuthenticator gAuth = new GoogleAuthenticator();
-        boolean codigoValido = gAuth.authorize(secretKey, Integer.parseInt(codigo));
+        boolean codigoValido = false;
+        try {
+            codigoValido = gAuth.authorize(usuario.getSecretKey(), Integer.parseInt(codigo));
+        } catch (NumberFormatException e) {
+            codigoValido = false;
+        }
 
         if (codigoValido) {
-            // Código correcto, redirige al dashboard o donde quieras
             return "redirect:/dashboard";
         } else {
             model.addAttribute("error", "Código inválido, inténtalo de nuevo");
             model.addAttribute("email", email);
-            return "google-auth-validate";  // una vista para pedir el código, por ejemplo
+            return "google-auth-validate";
         }
     }
-
 
     @PostMapping("/google-auth/setup")
     public String validarCodigoSetup(@RequestParam String email, @RequestParam String codigo, Model model) {
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
 
-        // Obtén el secreto (debería estar ya guardado en DB, sino no funcionará)
-        String secretKey = usuario.getSecretKey();
+        if (usuario.getSecretKey() == null || usuario.getSecretKey().isEmpty()) {
+            return "redirect:/google-auth/setup?email=" + email;
+        }
 
         GoogleAuthenticator gAuth = new GoogleAuthenticator();
-        boolean codigoValido = gAuth.authorize(secretKey, Integer.parseInt(codigo));
+        boolean codigoValido = false;
+        try {
+            codigoValido = gAuth.authorize(usuario.getSecretKey(), Integer.parseInt(codigo));
+        } catch (NumberFormatException e) {
+            codigoValido = false;
+        }
 
         if (codigoValido) {
+            // Ya no necesitamos marcar "twoFactorEnabled", el secretKey ya existe
             return "redirect:/dashboard";
         } else {
             model.addAttribute("error", "Código inválido, inténtalo de nuevo");
-            // Reenvía datos para que pueda volver a probar
-            GoogleAuthService.GoogleAuthData data = new GoogleAuthService.GoogleAuthData(secretKey, "");
+            GoogleAuthService.GoogleAuthData data = new GoogleAuthService.GoogleAuthData(usuario.getSecretKey(), "");
             model.addAttribute("qrUrl", data.getQrUrl());
-            model.addAttribute("secret", secretKey);
+            model.addAttribute("secret", usuario.getSecretKey());
             model.addAttribute("email", email);
             return "google-auth-setup";
         }
