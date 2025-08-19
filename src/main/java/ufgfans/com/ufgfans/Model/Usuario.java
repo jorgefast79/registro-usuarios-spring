@@ -2,6 +2,7 @@ package ufgfans.com.ufgfans.Model;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "usuario")
@@ -19,6 +20,9 @@ public class Usuario {
     private String nombre;
 
     private String password;
+
+    private int intentosFallidos = 0;
+    private LocalDateTime bloqueadoHasta;
 
     @Column(name = "fecha_nacimiento")
     private LocalDate fechaNacimiento;
@@ -53,6 +57,22 @@ public class Usuario {
     }       
     public void setSecretKey(String secretKey) {
         this.secretKey = secretKey;
+    }
+
+    public int getIntentosFallidos() {
+        return intentosFallidos;
+    }
+
+    public void setIntentosFallidos(int intentosFallidos) {
+        this.intentosFallidos = intentosFallidos;
+    }
+
+    public LocalDateTime getBloqueadoHasta() {
+        return bloqueadoHasta;
+    }
+
+    public void setBloqueadoHasta(LocalDateTime bloqueadoHasta) {
+        this.bloqueadoHasta = bloqueadoHasta;
     }
 
 }

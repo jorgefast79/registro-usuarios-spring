@@ -1,5 +1,7 @@
 package ufgfans.com.ufgfans.Controller;
 
+import java.time.LocalDateTime;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -53,11 +55,14 @@ public class GoogleAuthController {
     public String validarCodigo(@RequestParam String email, @RequestParam String codigo, Model model) {
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
 
-        if (usuario.getSecretKey() == null || usuario.getSecretKey().isEmpty()) {
-            // Si no tiene secret → redirigir a setup
-            return "redirect:/google-auth/setup?email=" + email;
+        // 1. Verificar si está bloqueado
+        if (usuario.getBloqueadoHasta() != null && usuario.getBloqueadoHasta().isAfter(LocalDateTime.now())) {
+            model.addAttribute("error", "Cuenta bloqueada hasta " + usuario.getBloqueadoHasta().toString());
+            model.addAttribute("email", email);
+            return "google-auth-validate";
         }
 
+        // 2. Validar código
         GoogleAuthenticator gAuth = new GoogleAuthenticator();
         boolean codigoValido = false;
         try {
@@ -67,9 +72,27 @@ public class GoogleAuthController {
         }
 
         if (codigoValido) {
+            // ✅ Resetear contador de fallos
+            usuario.setIntentosFallidos(0);
+            usuario.setBloqueadoHasta(null);
+            usuarioRepository.save(usuario);
+
             return "redirect:/dashboard";
         } else {
-            model.addAttribute("error", "Código inválido, inténtalo de nuevo");
+            // ❌ Incrementar intentos
+            int fallos = usuario.getIntentosFallidos() + 1;
+            usuario.setIntentosFallidos(fallos);
+
+            if (fallos >= 5) {
+                usuario.setBloqueadoHasta(LocalDateTime.now().plusMinutes(5));
+                usuario.setIntentosFallidos(0); // reset al llegar al límite
+                model.addAttribute("error", "Cuenta bloqueada por 5 minutos debido a múltiples intentos fallidos");
+            } else {
+                model.addAttribute("error", "Código inválido, intento " + fallos + " de 5");
+            }
+
+            usuarioRepository.save(usuario);
+
             model.addAttribute("email", email);
             return "google-auth-validate";
         }
