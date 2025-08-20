@@ -3,6 +3,7 @@ package ufgfans.com.ufgfans.Model;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "usuario")
@@ -29,6 +30,13 @@ public class Usuario {
 
     @Column(name = "secret_key")
     private String secretKey;
+
+    @Column(name = "otp_expiration")
+    private LocalDateTime otpExpiration;
+
+    // Relación uno a muchos: un usuario puede tener varios OTPs
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UsuarioOtp> otps;
 
     // --- Getters / Setters ---
     public Long getId() { return id; }
@@ -74,5 +82,9 @@ public class Usuario {
     public void setBloqueadoHasta(LocalDateTime bloqueadoHasta) {
         this.bloqueadoHasta = bloqueadoHasta;
     }
+
+    public List<UsuarioOtp> getOtps() { return otps; }
+    public void setOtps(List<UsuarioOtp> otps) { this.otps = otps; }
+
 
 }
