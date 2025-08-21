@@ -56,9 +56,16 @@ public class SecurityConfig {
                 .permitAll()
             )
             .logout(logout -> logout
-                .logoutUrl("/logout")  // Esta línea es importante para que Spring maneje /logout
-                .logoutSuccessUrl("/login?logout") // Opcional: a dónde ir después de cerrar sesión
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/login?logout")
+                .invalidateHttpSession(true)  // ⚡ invalida sesión al cerrar sesión
+                .deleteCookies("JSESSIONID")  // ⚡ borra cookies
                 .permitAll()
+            )
+            .sessionManagement(session -> session
+                .invalidSessionUrl("/login?timeout") // ⚡ redirige cuando la sesión expira
+                .maximumSessions(1)                  // opcional: limitar sesiones por usuario
+                .expiredUrl("/login?expired")       // opcional: url cuando expira otra sesión
             );
 
         return http.build();

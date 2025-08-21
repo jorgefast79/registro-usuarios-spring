@@ -77,6 +77,7 @@ public class UsuarioController {
     @GetMapping("/verificar")
     public String mostrarVerificacion(@RequestParam String email, Model model) {
         model.addAttribute("email", email);
+        model.addAttribute("usuario", new Usuario()); 
         return "verificar"; 
     }
 

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(pageTitle)">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title th:text="${pageTitle} ?: 'UfgFan'">UfgFan</title>
+
+    <!-- Estilos / librerías globales -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+    <!-- (Opcional) tu CSS -->
+    <!-- <link th:href="@{/css/app.css}" rel="stylesheet"> -->
+</head>
+<body class="bg-light">
+    <!-- Este body se reemplaza por el de cada página -->
+    <div class="container py-5">
+        <p class="text-muted">Base vacía (no se renderiza tal cual).</p>
+    </div>
+
+    <!-- Scripts globales -->
+    <div th:fragment="scripts">
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script>
+            // Helper global de notificaciones
+            const showMessage = (type, title, text, timer = 2500) => {
+                Swal.fire({
+                    icon: type,
+                    title: title,
+                    text: text,
+                    timer: type === 'success' ? timer : undefined,
+                    showConfirmButton: type !== 'success'
+                });
+            };
+        </script>
+
+        <!-- Mensajes globales por querystring -->
+        <script th:if="${param.error}">
+            showMessage('error','Error','Ocurrió un problema');
+        </script>
+        <script th:if="${param.success}">
+            showMessage('success','Éxito','Operación realizada correctamente');
+        </script>
+
+        <!-- Bootstrap JS (si lo necesitas) -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    </div>
+</body>
+</html>
